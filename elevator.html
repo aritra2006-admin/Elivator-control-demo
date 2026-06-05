@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛗 Elevator Control System</title>
+    <style>
+        /* ===== GENERAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+
+        /* ===== TITLE ===== */
+        .title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #00d2ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .title p {
+            font-size: 1.1em;
+            color: #aaa;
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .main-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        /* ===== BUILDING ===== */
+        .building-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .building-label {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #00d2ff;
+            font-weight: bold;
+        }
+
+        .building {
+            display: flex;
+            gap: 0px;
+        }
+
+        /* ===== FLOOR LABELS ===== */
+        .floor-labels {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            margin-right: 10px;
+            height: 440px;
+        }
+
+        .floor-label {
+            font-size: 0.9em;
+            color: #aaa;
+            text-align: right;
+            padding: 5px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .floor-label.active-floor {
+            color: #00d2ff;
+            font-weight: bold;
+        }
+
+        /* ===== ELEVATOR SHAFT ===== */
+        .shaft {
+            width: 120px;
+            height: 440px;
+            background: rgba(255,255,255,0.05);
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Floor dividers */
+        .shaft::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            left: 0;
+            top: 110px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 110px 0 rgba(255,255,255,0.1),
+                        0 220px 0 rgba(255,255,255,0.1);
+        }
+
+        /* ===== ELEVATOR CAR ===== */
+        .elevator-car {
+            width: 100px;
+            height: 95px;
+            background: linear-gradient(145deg, #2a2a5a, #3a3a8a);
+            border: 3px solid #7b2ff7;
+            border-radius: 8px;
+            position: absolute;
+            left: 7px;
+            bottom: 5px;
+            transition: bottom 1s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(123, 47, 247, 0.5);
+        }
+
+        /* Elevator doors */
+        .door-container {
+            width: 70px;
+            height: 65px;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            background: #1a1a3e;
+        }
+
+        .door-left, .door-right {
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(180deg, #4a4aaa, #2a2a7a);
+            transition: width 0.6s ease;
+            border: 1px solid #7b2ff7;
+        }
+
+        .door-left {
+            border-radius: 3px 0 0 3px;
+        }
+
+        .door-right {
+            border-radius: 0 3px 3px 0;
+        }
+
+        /* Door open state */
+        .door-open .door-left {
+            width: 0%;
+        }
+
+        .door-open .door-right {
+            width: 0%;
+        }
+
+        .elevator-floor-display {
+            font-size: 0.75em;
+            color: #00d2ff;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        /* ===== FLOOR BUTTONS (outside elevator) ===== */
+        .floor-buttons-outside {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            height: 440px;
+            margin-left: 15px;
+        }
+
+        .floor-call-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .floor-call-btn:hover {
+            transform: scale(1.1);
+            background: rgba(0, 210, 255, 0.3);
+            border-color: #00d2ff;
+        }
+
+        .floor-call-btn.requested {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            border-color: #ffd200;
+            color: #000;
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 15px rgba(255, 210, 0, 0.7);
+        }
+
+        .floor-call-btn.active {
+            background: linear-gradient(135deg, #00d2ff, #7b2ff7);
+            border-color: #00d2ff;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.7);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* ===== CONTROL PANEL ===== */
+        .control-panel {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 25px;
+            width: 300px;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-title {
+            text-align: center;
+            font-size: 1.3em;
+            color: #00d2ff;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* Inside elevator buttons */
+        .inside-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .inside-btn {
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.2);
+            font-size: 1.4em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.08);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .inside-btn span.label {
+            font-size: 0.45em;
+            color: #aaa;
+        }
+
+        .inside-btn:hover {
+            transform: scale(1.05);
+            background: rgba(123, 47, 247, 0.3);
+            border-color: #7b2ff7;
+        }
+
+        .inside-btn.requested {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            border-color: #ffd200;
+            color: #000;
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 15px rgba(255, 210, 0, 0.6);
+        }
+
+        .inside-btn.active {
+            background: linear-gradient(135deg, #00d2ff, #7b2ff7);
+            border-color: #00d2ff;
+            animation: none;
+        }
+
+        /* ===== STATUS PANEL ===== */
+        .status-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .status-title {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .status-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .status-item .status-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #00d2ff;
+        }
+
+        .status-item .status-label {
+            font-size: 0.7em;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        /* ===== DIRECTION INDICATOR ===== */
+        .direction-indicator {
+            text-align: center;
+            font-size: 2.5em;
+            margin: 10px 0;
+            transition: all 0.3s;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ===== LOG PANEL ===== */
+        .log-panel {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 25px;
+            width: 280px;
+            backdrop-filter: blur(10px);
+            max-height: 520px;
+        }
+
+        .log-title {
+            color: #00d2ff;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .log-list {
+            list-style: none;
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .log-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .log-list::-webkit-scrollbar-thumb {
+            background: #7b2ff7;
+            border-radius: 5px;
+        }
+
+        .log-item {
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            border-left: 3px solid;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-item.info {
+            background: rgba(0, 210, 255, 0.1);
+            border-color: #00d2ff;
+            color: #cce;
+        }
+
+        .log-item.success {
+            background: rgba(0, 255, 100, 0.1);
+            border-color: #00ff64;
+            color: #cfc;
+        }
+
+        .log-item.warning {
+            background: rgba(255, 210, 0, 0.1);
+            border-color: #ffd200;
+            color: #ffc;
+        }
+
+        .log-item.door {
+            background: rgba(123, 47, 247, 0.1);
+            border-color: #7b2ff7;
+            color: #dcd;
+        }
+
+        .log-time {
+            font-size: 0.75em;
+            color: #888;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        /* ===== RESET BUTTON ===== */
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .reset-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(255, 65, 108, 0.5);
+        }
+
+        /* ===== LEGEND ===== */
+        .legend {
+            margin-top: 25px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .legend h3 {
+            text-align: center;
+            color: #00d2ff;
+            margin-bottom: 12px;
+        }
+
+        .legend-grid {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        /* ===== EMERGENCY BUTTON ===== */
+        .emergency-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            border: 3px solid #ff6666;
+            border-radius: 10px;
+            color: white;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+            animation: emergencyPulse 2s infinite;
+        }
+
+        @keyframes emergencyPulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,0,0,0.3); }
+            50% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }
+        }
+
+        .emergency-btn:hover {
+            transform: scale(1.02);
+        }
+
+        /* ===== FLOOR INDICATOR ON SHAFT ===== */
+        .floor-marker {
+            position: absolute;
+            right: 5px;
+            font-size: 0.65em;
+            color: rgba(255,255,255,0.3);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .control-panel, .log-panel {
+                width: 90%;
+            }
+        }
+
+        /* ===== MOVING ANIMATION ===== */
+        .moving-indicator {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2em;
+        }
+
+        /* ===== PEOPLE ICONS ===== */
+        .people-icons {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9em;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- TITLE -->
+    <div class="title">
+        <h1>🛗 Elevator Control System</h1>
+        <p>Click any floor button to call the elevator — No experience needed!</p>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+
+        <!-- ===== BUILDING SECTION ===== -->
+        <div class="building-section">
+            <div class="building-label">🏢 The Building</div>
+            <div class="building">
+
+                <!-- Floor Labels -->
+                <div class="floor-labels">
+                    <div class="floor-label" id="label-3">Floor 4<br><small>Top Floor</small></div>
+                    <div class="floor-label" id="label-2">Floor 3</div>
+                    <div class="floor-label" id="label-1">Floor 2</div>
+                    <div class="floor-label" id="label-0">Floor 1<br><small>Ground</small></div>
+                </div>
+
+                <!-- Elevator Shaft -->
+                <div class="shaft" id="shaft">
+                    <!-- Floor markers inside shaft -->
+                    <span class="floor-marker" style="top: 5px;">4</span>
+                    <span class="floor-marker" style="top: 115px;">3</span>
+                    <span class="floor-marker" style="top: 225px;">2</span>
+                    <span class="floor-marker" style="top: 335px;">1</span>
+
+                    <!-- Elevator Car -->
+                    <div class="elevator-car" id="elevatorCar">
+                        <span class="moving-indicator" id="movingIcon">🔲</span>
+                        <div class="door-container" id="doorContainer">
+                            <div class="door-left" id="doorLeft"></div>
+                            <div class="door-right" id="doorRight"></div>
+                        </div>
+                        <div class="elevator-floor-display" id="carFloorDisplay">Floor 1</div>
+                        <span class="people-icons" id="peopleIcons"></span>
+                    </div>
+                </div>
+
+                <!-- Call Buttons (Outside elevator, on each floor) -->
+                <div class="floor-buttons-outside">
+                    <button class="floor-call-btn" id="callBtn3" onclick="callElevator(3)" title="Call elevator to Floor 4">
+                        📞
+                    </button>
+                    <button class="floor-call-btn" id="callBtn2" onclick="callElevator(2)" title="Call elevator to Floor 3">
+                        📞
+                    </button>
+                    <button class="floor-call-btn" id="callBtn1" onclick="callElevator(1)" title="Call elevator to Floor 2">
+                        📞
+                    </button>
+                    <button class="floor-call-btn" id="callBtn0" onclick="callElevator(0)" title="Call elevator to Floor 1">
+                        📞
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Floor Names Below Building -->
+            <div style="display:flex; gap:5px; margin-top:10px; font-size:0.75em; color:#888;">
+                <span style="width:60px; text-align:right;">Labels</span>
+                <span style="width:120px; text-align:center;">Shaft</span>
+                <span style="width:50px; text-align:center;">Call</span>
+            </div>
+        </div>
+
+        <!-- ===== CONTROL PANEL ===== -->
+        <div class="control-panel">
+            <div class="panel-title">🎛️ Inside Elevator</div>
+
+            <!-- Direction Indicator -->
+            <div class="direction-indicator" id="directionIndicator">⏹️</div>
+
+            <!-- Status -->
+            <div class="status-panel">
+                <div class="status-title">📊 Elevator Status</div>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-value" id="currentFloorDisplay">1</div>
+                        <div class="status-label">Current Floor</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="stateDisplay">IDLE</div>
+                        <div class="status-label">State</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="doorDisplay">🚪</div>
+                        <div class="status-label">Door</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="targetDisplay">-</div>
+                        <div class="status-label">Going To</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inside Elevator Floor Buttons -->
+            <p style="text-align:center; font-size:0.85em; color:#aaa; margin-bottom:12px;">
+                👇 Press a floor number to go there
+            </p>
+            <div class="inside-buttons">
+                <button class="inside-btn" id="insideBtn3" onclick="callElevator(3)">
+                    4 <span class="label">Top Floor</span>
+                </button>
+                <button class="inside-btn" id="insideBtn2" onclick="callElevator(2)">
+                    3 <span class="label">Floor 3</span>
+                </button>
+                <button class="inside-btn" id="insideBtn1" onclick="callElevator(1)">
+                    2 <span class="label">Floor 2</span>
+                </button>
+                <button class="inside-btn" id="insideBtn0" onclick="callElevator(0)">
+                    1 <span class="label">Ground</span>
+                </button>
+            </div>
+
+            <!-- Emergency -->
+            <button class="emergency-btn" onclick="emergencyStop()">
+                🚨 EMERGENCY STOP
+            </button>
+
+            <!-- Reset -->
+            <button class="reset-btn" onclick="resetElevator()">
+                🔄 Reset Elevator
+            </button>
+        </div>
+
+        <!-- ===== LOG PANEL ===== -->
+        <div class="log-panel">
+            <div class="log-title">📋 Activity Log</div>
+            <ul class="log-list" id="logList">
+                <li class="log-item info">
+                    <span class="log-time">Just now</span>
+                    🟢 Elevator system started. Currently at Floor 1.
+                </li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- ===== LEGEND ===== -->
+    <div class="legend">
+        <h3>💡 How It Works — Simple Guide</h3>
+        <div class="legend-grid">
+            <div class="legend-item">
+                <div class="legend-dot" style="background:#ffd200;"></div>
+                Button is Requested (waiting)
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background:#00d2ff;"></div>
+                Elevator is Here / Active
+            </div>
+            <div class="legend-item">
+                <span>⬆️</span> Moving Up
+            </div>
+            <div class="legend-item">
+                <span>⬇️</span> Moving Down
+            </div>
+            <div class="legend-item">
+                <span>🚪</span> Door is Closed
+            </div>
+            <div class="legend-item">
+                <span>🔓</span> Door is Open
+            </div>
+            <div class="legend-item">
+                <span>📞</span> Call buttons on each floor
+            </div>
+            <div class="legend-item">
+                <span>🚨</span> Emergency Stop = Stops immediately
+            </div>
+        </div>
+    </div>
+
+
+<script>
+    // ========================================
+    //        ELEVATOR STATE MACHINE
+    // ========================================
+
+    // States (just like in Verilog!)
+    const STATE = {
+        IDLE:      'IDLE',
+        MOVING:    'MOVING',
+        DOOR_OPEN: 'DOOR_OPEN'
+    };
+
+    // Elevator variables
+    let currentFloor    = 0;       // 0 = Floor 1, 3 = Floor 4
+    let targetFloor     = -1;
+    let state           = STATE.IDLE;
+    let pendingRequests = [false, false, false, false]; // 4 floors
+    let doorTimer       = 0;
+    let movingUp        = false;
+    let movingDown      = false;
+    let doorOpen        = false;
+    let emergency       = false;
+    let passengerCount  = 0;
+
+    // Floor positions in pixels from bottom of shaft
+    const floorPositions = [5, 115, 225, 335];
+    const floorNames     = ["Floor 1 (Ground)", "Floor 2", "Floor 3", "Floor 4 (Top)"];
+
+    // ========================================
+    //         CALL ELEVATOR FUNCTION
+    // ========================================
+    function callElevator(floor) {
+        if (emergency) {
+            addLog("🚨 System in emergency stop! Please reset first.", "warning");
+            return;
+        }
+
+        if (floor === currentFloor && state === STATE.IDLE) {
+            addLog(`ℹ️ Elevator is already at ${floorNames[floor]}!`, "info");
+            openDoors();
+            return;
+        }
+
+        if (pendingRequests[floor]) {
+            addLog(`⏳ ${floorNames[floor]} already requested. Please wait...`, "warning");
+            return;
+        }
+
+        // Add request
+        pendingRequests[floor] = true;
+
+        // Update button visuals
+        updateButtonState(floor, 'requested');
+
+        addLog(`📞 Request added for ${floorNames[floor]}`, "info");
+
+        // Start moving if idle
+        if (state === STATE.IDLE) {
+            processNextRequest();
+        }
+    }
+
+    // ========================================
+    //       PROCESS NEXT REQUEST
+    // ========================================
+    function processNextRequest() {
+        // Find nearest floor request
+        let nearest = -1;
+        let minDistance = 999;
+
+        for (let i = 0; i < 4; i++) {
+            if (pendingRequests[i]) {
+                let distance = Math.abs(i - currentFloor);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearest = i;
+                }
+            }
+        }
+
+        if (nearest === -1) {
+            // No more requests
+            state     = STATE.IDLE;
+            movingUp  = false;
+            movingDown = false;
+            updateDisplay();
+            addLog("✅ All requests completed. Elevator is idle.", "success");
+            return;
+        }
+
+        targetFloor = nearest;
+        state       = STATE.MOVING;
+
+        addLog(`🚀 Moving to ${floorNames[targetFloor]}...`, "info");
+        moveElevator();
+    }
+
+    // ========================================
+    //          MOVE ELEVATOR
+    // ========================================
+    function moveElevator() {
+        if (emergency) return;
+        if (state !== STATE.MOVING) return;
+
+        if (currentFloor < targetFloor) {
+            movingUp   = true;
+            movingDown = false;
+            updateDisplay();
+
+            setTimeout(() => {
+                currentFloor++;
+                updateElevatorPosition();
+                addLog(`⬆️ Passed ${floorNames[currentFloor]}`, "info");
+                updateDisplay();
+
+                if (currentFloor === targetFloor) {
+                    arrivedAtFloor();
+                } else {
+                    setTimeout(moveElevator, 1200);
+                }
+            }, 1000);
+
+        } else if (currentFloor > targetFloor) {
+            movingUp   = false;
+            movingDown = true;
+            updateDisplay();
+
+            setTimeout(() => {
+                currentFloor--;
+                updateElevatorPosition();
+                addLog(`⬇️ Passed ${floorNames[currentFloor]}`, "info");
+                updateDisplay();
+
+                if (currentFloor === targetFloor) {
+                    arrivedAtFloor();
+                } else {
+                    setTimeout(moveElevator, 1200);
+                }
+            }, 1000);
+
+        } else {
+            arrivedAtFloor();
+        }
+    }
+
+    // ========================================
+    //         ARRIVED AT FLOOR
+    // ========================================
+    function arrivedAtFloor() {
+        movingUp   = false;
+        movingDown = false;
+        state      = STATE.DOOR_OPEN;
+
+        pendingRequests[currentFloor] = false;
+        updateButtonState(currentFloor, 'active');
+
+        addLog(`🎯 Arrived at ${floorNames[currentFloor]}!`, "success");
+        updateDisplay();
+        openDoors();
+    }
+
+    // ========================================
+    //            DOOR CONTROL
+    // ========================================
+    function openDoors() {
+        doorOpen = true;
+        state    = STATE.DOOR_OPEN;
+
+        // Visual door open
+        document.getElementById('doorContainer').classList.add('door-open');
+        document.getElementById('movingIcon').textContent = '🔓';
+        document.getElementById('doorDisplay').textContent = '🔓';
+
+        // Random passengers
+        passengerCount = Math.floor(Math.random() * 4);
+        document.getElementById('peopleIcons').textContent = '👤'.repeat(passengerCount);
+
+        addLog(`🚪 Doors OPENING at ${floorNames[currentFloor]}`, "door");
+
+        // Keep open for 3 seconds then close
+        setTimeout(() => {
+            closeDoors();
+        }, 3000);
+    }
+
+    function closeDoors() {
+        doorOpen = false;
+
+        document.getElementById('doorContainer').classList.remove('door-open');
+        document.getElementById('movingIcon').textContent  = '🔲';
+        document.getElementById('doorDisplay').textContent = '🚪';
+        document.getElementById('peopleIcons').textContent = '';
+
+        addLog(`🚪 Doors CLOSING at ${floorNames[currentFloor]}`, "door");
+
+        updateButtonState(currentFloor, 'normal');
+
+        // Go to IDLE then check next request
+        state = STATE.IDLE;
+        updateDisplay();
+
+        setTimeout(() => {
+            processNextRequest();
+        }, 500);
+    }
+
+    // ========================================
+    //       UPDATE ELEVATOR POSITION
+    // ========================================
+    function updateElevatorPosition() {
+        const car = document.getElementById('elevatorCar');
+        car.style.bottom = floorPositions[currentFloor] + 'px';
+        document.getElementById('carFloorDisplay').textContent = 
+            'Floor ' + (currentFloor + 1);
+
+        // Update floor labels
+        for (let i = 0; i < 4; i++) {
+            const label = document.getElementById('label-' + i);
+            if (i === currentFloor) {
+                label.classList.add('active-floor');
+            } else {
+                label.classList.remove('active-floor');
+            }
+        }
+    }
+
+    // ========================================
+    //          UPDATE DISPLAY
+    // ========================================
+    function updateDisplay() {
+        // Current floor
+        document.getElementById('currentFloorDisplay').textContent = currentFloor + 1;
+
+        // State
+        document.getElementById('stateDisplay').textContent = state;
+
+        // Target
+        document.getElementById('targetDisplay').textContent = 
+            targetFloor >= 0 ? (targetFloor + 1) : '-';
+
+        // Direction
+        const dir = document.getElementById('directionIndicator');
+        if (movingUp) {
+            dir.textContent = '⬆️';
+            dir.style.color = '#00ff64';
+        } else if (movingDown) {
+            dir.textContent = '⬇️';
+            dir.style.color = '#ff4444';
+        } else if (state === STATE.DOOR_OPEN) {
+            dir.textContent = '🔓';
+            dir.style.color = '#ffd200';
+        } else {
+            dir.textContent = '⏹️';
+            dir.style.color = '#aaa';
+        }
+    }
+
+    // ========================================
+    //       UPDATE BUTTON STATES
+    // ========================================
+    function updateButtonState(floor, status) {
+        const callBtn   = document.getElementById('callBtn' + floor);
+        const insideBtn = document.getElementById('insideBtn' + floor);
+
+        // Remove all states
+        callBtn.classList.remove('requested', 'active');
+        insideBtn.classList.remove('requested', 'active');
+
+        if (status === 'requested') {
+            callBtn.classList.add('requested');
+            insideBtn.classList.add('requested');
+        } else if (status === 'active') {
+            callBtn.classList.add('active');
+            insideBtn.classList.add('active');
+        }
+    }
+
+    // ========================================
+    //          EMERGENCY STOP
+    // ========================================
+    function emergencyStop() {
+        emergency  = true;
+        movingUp   = false;
+        movingDown = false;
+        state      = STATE.IDLE;
+
+        document.getElementById('directionIndicator').textContent = '🚨';
+        document.getElementById('stateDisplay').textContent        = 'EMERGENCY';
+        document.getElementById('stateDisplay').style.color        = 'red';
+
+        // Stop elevator movement visually
+        const car = document.getElementById('elevatorCar');
+        car.style.borderColor = 'red';
+        car.style.boxShadow   = '0 0 30px rgba(255,0,0,0.8)';
+
+        addLog("🚨 EMERGENCY STOP ACTIVATED! Press Reset to resume.", "warning");
+    }
+
+    // ========================================
+    //           RESET ELEVATOR
+    // ========================================
+    function resetElevator() {
+        emergency       = false;
+        currentFloor    = 0;
+        targetFloor     = -1;
+        state           = STATE.IDLE;
+        pendingRequests = [false, false, false, false];
+        movingUp        = false;
+        movingDown      = false;
+        doorOpen        = false;
+
+        // Reset visuals
+        const car = document.getElementById('elevatorCar');
+        car.style.borderColor = '#7b2ff7';
+        car.style.boxShadow   = '0 0 20px rgba(123, 47, 247, 0.5)';
+
+        document.getElementById('doorContainer').classList.remove('door-open');
+        document.getElementById('movingIcon').textContent  = '🔲';
+        document.getElementById('doorDisplay').textContent = '🚪';
+        document.getElementById('peopleIcons').textContent = '';
+        document.getElementById('stateDisplay').style.color = '#00d2ff';
+
+        updateElevatorPosition();
+        updateDisplay();
+
+        // Reset all buttons
+        for (let i = 0; i < 4; i++) {
+            updateButtonState(i, 'normal');
+        }
+
+        addLog("🔄 System Reset! Elevator is back at Floor 1.", "success");
+    }
+
+    // ========================================
+    //           ACTIVITY LOG
+    // ========================================
+    function addLog(message, type) {
+        const logList = document.getElementById('logList');
+        const now     = new Date();
+        const time    = now.toLocaleTimeString();
+
+        const item = document.createElement('li');
+        item.className = 'log-item ' + type;
+        item.innerHTML = `<span class="log-time">${time}</span>${message}`;
+
+        // Add to top
+        logList.insertBefore(item, logList.firstChild);
+
+        // Keep max 20 logs
+        while (logList.children.length > 20) {
+            logList.removeChild(logList.lastChild);
+        }
+    }
+
+    // ========================================
+    //          INITIALIZE
+    // ========================================
+    updateElevatorPosition();
+    updateDisplay();
+
+</script>
+
+</body>
+</html>
